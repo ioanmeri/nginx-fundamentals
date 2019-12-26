@@ -124,3 +124,84 @@ nginx -t
 > Caution! the sites directory should be created inside the top root directory! 
 
 
+## Location Blocks
+
+The most used context in any nginx configuration.
+It's how will define and configure the behaviour of specific URI's or requests.
+
+The intercept a request based on its value and then doing somthing other than just trying to serve a matching file relative to the root directory.
+
+
+### Prefix match with /
+
+much anything starting with /greet, like /greeting or /greeting/more
+
+```
+http {
+
+    include mime.types;
+
+    server {
+
+        listen 80;
+        server_name 167.172.62.98;
+
+        root /sites/demo;
+
+        location /greet {
+            return 200 'Hello from NGINX "/greet" location';
+        }
+    }
+}
+```
+
+### Exact Match with = /
+
+```
+location = /greet {
+    return 200 'Hello from NGINX "/greet" location';
+}
+```
+
+### REGEX match with ~ /
+/greet4, greet0, greet9
+
+Tilda modifier is case sensitive
+```
+location ~ /greet[0-9] {
+    return 200 'Hello from NGINX "/greet" location';
+}
+```
+
+
+### REGEX match case insensitive with ~* /
+/greet4, greet0, greet9
+
+~* modifier is case insensitive
+```
+location ~* /greet[0-9] {
+    return 200 'Hello from NGINX "/greet" location MATCH CASE INSESITIVE';
+}
+```
+
+REGEX >>> PREFIX MATCH
+
+
+### Preferential Prefix match with ^~ /
+
+Essentially the same as the basic prefix modifier only more important than a regular expression match.
+
+```
+location ^~ /Greet2 {
+    return 200 'Hello from NGINX "/greet" location MATCH CASE INSESITIVE';
+}
+```
+
+### The Order of priority
+It's important to understand the order of priority in which nginx matches requests
+
+1. Exact Match,               = uri
+2. Preferential Prefix Match  ^~ uri
+3. REGEX Match,               ~* uri
+4. Prefix Match               uri
+
