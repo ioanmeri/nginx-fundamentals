@@ -33,7 +33,7 @@ apt-get update
 ```
 
 ### Install Nginx via apt-get on Ubuntu
-```
+``` 
 apt-get install nginx
 ```
 
@@ -115,7 +115,7 @@ tar -zxvf nginx-1.13.10.tar.gz
 
 6. change into extracted directory
 ```
-cd nginx-1.13.10.tar.gz
+cd nginx-1.13.10
 ```
 
 
@@ -139,7 +139,7 @@ or on centOS: yum groupinstall "Development Tools"
 ./configure
 ```
 
-10. install dependencies for nginx
+10. install dependencies for nginx.
 You can run ./configure and check what is missing
 
 ```
@@ -180,6 +180,11 @@ which we will use to start and stop the nginx service.
 --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log
 --http-log-path=/var/log/nginx/access.log --with-pcre --pid-path=/var/run/nginx.pid
 --with-http_ssl_module
+```
+
+one line:
+```
+./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-pcre --pid-path=/var/run/nginx.pid --with-http_ssl_module
 ```
   
 15.
@@ -224,6 +229,102 @@ ps aux | grep nginx
 
 
 ## Adding an NGINX Service
+
+### Configure a System Service for nginx
+
+We will be adding nginx as a systemd service.
+
+Creating an nginx service will not only allow us to manage **starting, stopping and reloading** nginx in a more standardized way but **also** make **starting nginx on boot**.
+
+Full list of nginx available flags:
+``` 
+nginx -h
+```
+...
+
+```
+-s signal   : send signal to a master process: stop, quit, reopen, reload
+```
+
+Stop the process:
+```
+nginx -s stop
+```
+
+### Add a systemd service
+
+To enable the service, we re going to have to add a small script from [nginx.com](https://www.nginx.com/resources/wiki/start/topics/examples/systemd/)
+
+
+Save this file as /lib/systemd/system/nginx.service
+```
+[Unit]
+Description=The NGINX HTTP and reverse proxy server
+After=syslog.target network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=forking
+PIDFile=/run/nginx.pid
+ExecStartPre=/usr/sbin/nginx -t
+ExecStart=/usr/sbin/nginx
+ExecReload=/usr/sbin/nginx -s reload
+ExecStop=/bin/kill -s QUIT $MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+```
+
+1. copy location
+
+2. create file at given location
+```
+touch /lib/systemd/system/nginx.service
+```
+
+3. add the script content using nano
+```
+nano /lib/systemd/system/nginx.service
+```
+
+change configuration to match the init.
+
+ctrl + o to save, enter to confirm
+ctrl + x to exit
+
+### Start/Stop nginx using systemd
+
+```
+systemctl start nginx 
+```
+
+and stop
+```
+systemctl stop nginx 
+```
+
+### Check nginx status
+
+```
+systemctl status nginx
+```
+
+### Startup nginx on boot
+
+```
+systemctl enable nginx
+```
+
+reboot machine:
+```
+systemctl reboot
+```
+
+
+
+
+
+
 
 
 
