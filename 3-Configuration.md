@@ -508,3 +508,65 @@ location @friendly_404{
 ```
 
 
+## Logging
+
+nginx provides us two log types: **error logs** and **access logs**.
+
+Error logs for anything that failed or didn't happen as expected.
+
+Access logs for all requests to the server.
+
+Logs allows us to track down errors or even identify malicious users.
+
+In our case we specified the path to the log files when we configured nginx.
+
+### Check access logs
+
+```
+cd /var/log/nginx/
+echo '' > access.log
+echo '' > error.log
+ls -l
+```
+
+visit /thumb.png
+
+```
+cat access.log
+```
+
+404 is a perfectly fine response and by no means an error. It is not logged in the error file!
+
+
+### Custom Access log
+```
+location /secure {
+  access_log /var/log/nginx/secure.access.log;
+  return 200 "Welcome to secure area";
+}
+```
+
+or log in both. 
+Log directives are of the few directives that you can use multiple times like this.
+
+```
+location /secure {
+  access_log /var/log/nginx/secure.access.log;
+  access_log /var/log/nginx/access.log;
+  return 200 "Welcome to secure area";
+}
+```
+
+### Disable access log
+
+Disable logging for sites receiving very high traffic. It reduces server load and keeps log files smaller.
+
+```
+location /secure {
+  access_log off;
+  return 200 "Welcome to secure area"
+}
+```
+
+Disable the majority of access logs, and leave the error logs in place.
+
