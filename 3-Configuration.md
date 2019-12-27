@@ -291,7 +291,9 @@ http {
 }
 ```
 
-### Our Own Configuration Variables
+### Configuration variables
+
+Our Own Variables:
 
 ```
 
@@ -315,3 +317,115 @@ server {
 }
 ```
 
+
+## Rewrites
+
+Rewrites or sipmly redirects in some cases.
+
+Two **directives** for rewriting requests:
+
+* rewrite
+  * pattern URI
+* return 
+  * status URI
+
+When we are using return directive and the response code is a 300 variant, which is for redirects,
+e.g.
+```
+return 307 /some/path;
+```
+return directive changes in it then except a URI as the second parameter
+
+Let's say we want to serve the image /thumb.png for /logo:
+
+### 307 Temporary redirect with return
+```
+location /logo {
+    return 307 /thumb.png;
+}
+```
+
+But the url changed **from /logo to /thumb.png**, which is essentially **the main difference between rewrites and redirects**
+
+A redirect simply tells the client performing the request, where to go instead.
+
+A rewrite on the other hand, mutates the URI internally.
+
+
+### Rewritting
+
+When a URI is rewritten it also gets re-evalutated by nginx as a completely new request. Meaning:
+
+```
+server {
+
+    listen 80;
+    server_name 167.172.62.98;
+
+    root /sites/demo;
+
+    rewrite ^/user/\w+ /greet;
+
+    location /greet {
+        return 200 "Hello user";
+    }
+}
+```
+/user/john, at this point the rewritten greet URI starts from the top again and will get re-evaluated again. The re-evaluation makes rewrites very powerful but also requires more system resources than a return.
+
+#### Capture Groups
+
+Another important and powerful feature of rewrites is the **ability to capture certain parts of the original URI**, using standard **regular expression capture groups**. Simply wrap tha part in braces and can be accessed as $1. If we have a second capture group, we can access that value as $2.
+
+```
+server {
+
+    listen 80;
+    server_name 167.172.62.98;
+
+    root /sites/demo;
+
+    rewrite ^/user/(\w+) /greet/$1;
+
+    location /greet {
+        return 200 "Hello user";
+    }
+
+    location = /greet/john {
+        return 200 "Hello John";
+    }
+}
+```
+
+#### Passing Optional Flags
+
+**Last Flag**
+
+```
+server {
+
+    listen 80;
+    server_name 167.172.62.98;
+
+    root /sites/demo;
+
+    rewrite ^/user/(\w+) /greet/$1;
+    rewrite ^/greet/john /thumb.png;
+
+    location /greet {
+        return 200 "Hello user";
+    }
+
+    location = /greet/john {
+        return 200 "Hello John";
+    }
+}
+```
+
+What the last flag allows us to do is essentially tell nginx not to allow a URI to be rewritten anymore:
+
+Make sure it is the last time it gets rewritten, meaning it should skip over the second rewrite.
+Request the same URI with reload.
+```
+rewrite ^/user/(\w+) /greet/$1 last;
+```
