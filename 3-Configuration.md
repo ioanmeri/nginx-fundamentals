@@ -129,7 +129,7 @@ nginx -t
 The most used context in any nginx configuration.
 It's how will define and configure the behaviour of specific URI's or requests.
 
-The intercept a request based on its value and then doing somthing other than just trying to serve a matching file relative to the root directory.
+They intercept a request based on its value and then doing something other than just trying to serve a matching file relative to the root directory.
 
 
 ### Prefix match with /
@@ -193,7 +193,7 @@ Essentially the same as the basic prefix modifier only more important than a reg
 
 ```
 location ^~ /Greet2 {
-    return 200 'Hello from NGINX "/greet" location MATCH CASE INSESITIVE';
+    return 200 'Hello from NGINX "/Greet2" location MATCH CASE INSESITIVE';
 }
 ```
 
@@ -204,4 +204,114 @@ It's important to understand the order of priority in which nginx matches reques
 2. Preferential Prefix Match  ^~ uri
 3. REGEX Match,               ~* uri
 4. Prefix Match               uri
+
+
+## Variables
+
+The nginx configuration syntax closely resembles that of a programming language. Implementing in some ways the concept of scope, includes and variables and conditionals
+
+### Forms of Variables
+
+* Configuration Variables
+  * set $var 'something';
+
+* NGINX Module Variables
+  * $http, $uri, $args
+  * [Alphabetical index of variables](http://nginx.org/en/docs/varindex.html)
+
+
+#### Nginx variables
+
+```
+http {
+
+    include mime.types;
+
+    server {
+
+        listen 80;
+        server_name 167.172.62.98;
+
+        root /sites/demo;
+
+        location /inspect {
+            return 200 "$host\n$uri\n$args";
+        }
+    }
+}
+```
+
+If i visit http://167.172.62.98/inspect?name=ray, the output is: 
+167.172.62.98
+/inspect
+name=ray
+
+To get a **specific arg**:
+Based on the query string, nginx compiles a named variable for each parameter, prefixed with arg:
+
+```
+location /inspect {
+    return 200 "Name: $arg_name";
+}
+```
+
+For http://167.172.62.98/inspect?name=ray, we get:
+
+**Name: ray**
+
+
+### Basic Conditionals
+
+Most commonly will be used in conjuction with these variables.
+
+> Note that the use of nginx congitionals inside location contexts is highly discouraged, as this can lead to some very unexpected behaviour.
+
+
+```
+http {
+
+    include mime.types;
+
+    server {
+
+        listen 80;
+        server_name 167.172.62.98;
+
+        root /sites/demo;
+
+        # Check static API key
+        if ( $arg_apikey != 1234 ){
+            return 401 "Incorrect API Key";
+        }
+
+        location /inspect {
+            return 200 "Name: $arg_name";
+        }
+    }
+}
+```
+
+### Our Own Configuration Variables
+
+```
+
+server {
+
+    listen 80;
+    server_name 167.172.62.98;
+
+    root /sites/demo;
+
+    set $weekend 'No';
+
+    # Check if weekend
+    if ( $date_local ~ 'Saturday|Sunday' ){
+        set $weekend 'Yes';
+    }
+
+    location /is_weekend {
+        return 200 $weekend;
+    }
+}
+```
 
