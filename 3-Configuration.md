@@ -570,3 +570,51 @@ location /secure {
 
 Disable the majority of access logs, and leave the error logs in place.
 
+
+## Inheritance & Directive types
+
+As in programming languages, an nginx context inherits configurations from its parent contexts.
+Top to bottom.
+
+```
+server {
+
+  root /site/demo;
+
+  location {
+
+    # Inherited root
+    root /sites/demo; 
+  }
+}
+```
+
+### Directive types
+
+#### Array Directive
+Can be specified multiple times without overriding a previous setting
+Gets inherited by all child contexts
+Child context can override inheritance by re-declaring directive
+```
+access_log /var/log/nginx/access.log
+access_log /var/log/nginx/custom.log.gz custom_format;
+```
+
+#### Standard Directive
+Can only be declared once. A second declaration overrides the first.
+Gets inherited by all child contexts
+
+```
+root /sites/site2;
+```
+
+#### Action Directive
+Invokes an action such as a rewrite or redirect.
+Inheritance does not apply as the request is either stopped (redirect/response) or re-evaluated(rewrite)
+
+```
+return 403 "You do not have permission to view this."
+```
+
+
+
