@@ -698,3 +698,96 @@ change it without rebuilding nginx:
 ```
 pid /var/run/new_nginx.pid;
 ```
+
+
+## Adding Dynamic Modules
+In order to add new modules to nginx, we will have to rebuild nginx from source.
+
+```
+ls -l
+```
+
+nginx-1.16.10 is there from previous installation.
+```
+cd nginx-1.16
+```
+
+**Step 1** to rebuilding: making sure we don't change any of the existing configuration,
+which we can easily get by:
+
+```
+nginx -V
+```
+
+**Step 2**: copy that
+```
+--sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-pcre --pid-path=/var/run/nginx.pid --with-http_ssl_module
+```
+
+**Step 3**: add the new module to this configuration
+
+To see the list of available configurations 
+```
+./congigure --help
+```
+
+or 
+```
+./configure --help | grep dynamic
+```
+
+**Step 4**:
+```
+./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=/var/log/nginx/access.log --with-pcre --pid-path=/var/run/nginx.pid --with-http_ssl_module --with-http_image_filter_module=dynamic --modules-path=/etc/nginx/modules
+```
+
+require gd library (dependency)
+
+```
+apt-get install libgd-dev
+```
+
+configure again.
+
+**Step 5**:
+```
+make
+```
+
+and 
+
+```
+make install
+```
+any existing configuration files are left untouched, nothing to worry about there.
+
+check:
+```
+nginx -V
+```
+
+and reload
+```
+systemctl reload nginx
+systemctl status nginx
+```
+
+To enable this module:
+
+load the module into configuration file:
+
+```
+worker_processes auto;
+
+load_module modules/ngx_http_image_filter_module.so;
+```
+
+and 
+
+```
+location = /thumb.png {
+    image_filter rotate 180;
+}
+```
+
+rebuilding nginx can be down without downtime!
