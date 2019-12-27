@@ -580,7 +580,7 @@ Top to bottom.
 server {
 
   root /site/demo;
-
+ 
   location {
 
     # Inherited root
@@ -617,4 +617,84 @@ return 403 "You do not have permission to view this."
 ```
 
 
+## Worker Processes
 
+To change the number of worker processes, we can use the **worker_processes** directive.
+
+```
+events {}
+
+worker_processes 2;
+
+http {
+    ...
+}
+```
+
+List the worker processes:
+```
+ps aux | grep nginx
+```
+
+
+Increasing the number of processes, doesn't necessarily equate to better performance.
+
+A single nginx worker process can only ever run on a single CPU core. 
+99% of the time, **configure nginx to run the exact number of processes as the server's CPUs**.
+
+To find out the nubmer of the processors:
+```
+nproc
+```
+
+or 
+```
+lscpu
+```
+
+### Automate number of workers
+```
+events {}
+
+worker_processes auto;
+
+http {
+    ...
+}
+```
+
+### Worker connections
+
+This sets the number of connections, each worker process can except. Again, your server has a limit of how many files can be opened at once, for each CPU core.
+
+check the limit of files:
+```
+ulimit -n
+```
+We can set this directive to that number to really max out this server.
+
+```
+events {
+    worker_connections 1024;
+}
+```
+
+Now we have the manimum number of concurrent requests, our server should be able to accept.
+
+**worker_processes x worker_connections = max connections**
+
+These two directives being the most important to understand in order to really optimize nginx process for performance.
+
+### Pid directive
+
+we set the default location for the nginx process id during the configure step. What this directive allows us to do then, is reconfigure the pid location, via the configuration file.
+
+```
+ls -l /var/run/n*
+```
+
+change it without rebuilding nginx:
+
+```
+pid /var/run/new_nginx.pid;
+```
