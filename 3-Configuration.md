@@ -429,3 +429,82 @@ Request the same URI with reload.
 ```
 rewrite ^/user/(\w+) /greet/$1 last;
 ```
+
+## Try Files & Named Locations
+
+Try files can be used in the server context, so applying to all incoming requests, or inside a location context.
+
+What try_files allows us to do is have nginx check for a resource to respond with in any number of locations, relative to the root directory with a final argument that results in a rewrite and re-evaluation.
+
+```
+try_files path1 path2 final;
+```
+What this directive is doing all the time being in the server context, is checking whether: 
+**/sites/demo/thumb.png** exists, and if it does serve it.
+
+If however this first argument doesn't exist, move on and try next one, and so on...
+
+```
+server {
+
+    listen 80;
+    server_name 167.172.62.98;
+
+    root /sites/demo;
+
+    try_files /thumb.png /greet;
+
+    location /greet {
+        return 200 "Hello user";
+    }
+
+}
+```
+
+In our case, thumb.png definitely exists relative to the root directory so this should be served for all requests. 
+
+When try_files reaches its last argument, that argument is treated as an internal rewrite. Meaning, in this case the rewritten request will be also re-evaluated.
+
+
+### try_files and variables
+
+```
+server {
+
+    listen 80;
+    server_name 167.172.62.98;
+
+    root /sites/demo;
+
+    try_files $uri /greet /friendly_404;
+
+    location /friendly_404{
+        return 404 "Sorry, that file could not be found";
+    }
+
+    location /greet {
+        return 200 "Hello user";
+    }
+
+}
+```
+
+check the error code by:
+```
+curl -I 167.172.62.98/index3
+```
+
+### Named Locations
+
+Simply means assigning a name to a location context. And using a directive such as try files, use that location by it's name, ensuring no re-evaluation has to happen on that final argument but instead just a definite call to the named location.
+
+
+```
+try_files $uri /greet @friendly_404;
+
+location @friendly_404{
+    return 404 "Sorry, that file could not be found";
+}
+```
+
+
